@@ -44,6 +44,8 @@ var ngrokStuff = fs.readFileSync(__dirname + '/ngrok.txt', 'utf8').split("\n");
 var ngrokNumber = ngrokStuff[0];
 var ngrokPort = ngrokStuff[1];
 
+const password = fs.readFileSync(__dirname + '/pass.txt', 'utf8').split("\n")[0];
+
 
 //FIRST ITERATION OF STOP F, DO NOT PUT SHIT TO RUN BEFORE THIS PLEASE
 stopBoardF();
@@ -77,9 +79,11 @@ app.get( '/stateCheck', function (req, res){
 });
 
 app.post( '/stateChange', function (req, res){
+    if (password.trim() != req.body.pass.trim() ){return res.status(200).send("idiot");}
     temp = req.body.state;
     if (temp == "staticPicture" || temp == "slideshow" || temp == "gif" || temp == "paint" || temp == "off" || temp == "vid"){
         displayState = temp;
+        console.log("state changed to " + temp + "")
         res.status(200).send("state changed to " + temp + "");
         if (temp == "off"){
             stopBoardF();
@@ -103,13 +107,20 @@ app.post( '/stateChange', function (req, res){
             setTimeout(function(){
                 startVidF();
             }, 500);
+        } else if (temp == "paint"){
+            stopBoardF();
+            setTimeout(function(){
+                //startPaintF();
+            }, 500);
         }
     } else {
+        console.log(temp + " is not a state stupid");
         res.status(400).send("not a state stupid");
     }
 });
 
 app.post('/ngrokChange', function(req, res){
+    if (password.trim() != req.body.pass.trim() ){return res.status(200).send("idiot");}
     if (Number.isInteger(req.body.ngrokNumber) && Number.isInteger(req.body.ngrokPort)){
         ngrokNumber = req.body.ngrokNumber;
         ngrokPort = req.body.ngrokPort;
@@ -122,6 +133,7 @@ app.post('/ngrokChange', function(req, res){
 });
 
 app.post('/startBoard', function(req, res){
+    if (password.trim() != req.body.pass.trim() ){return res.status(200).send("idiot");}
     displayState = "staticPicture";
     stopBoardF();
     setTimeout(function(){
@@ -131,12 +143,14 @@ app.post('/startBoard', function(req, res){
 });
 
 app.post('/stopBoard', function(req, res){
+    if (password.trim() != req.body.pass.trim() ){return res.status(200).send("idiot");}
     displayState = "off";
     stopBoardF();
     res.status(200).send("board stopped");
 });
 
 app.post('/uploadPic', function(req, res){
+    if (password.trim() != req.fields.pass.trim() ){return res.status(200).send("idiot");}
     if (!req.files) {
         return res.status(400).send('No files were uploaded.');
     }
@@ -169,6 +183,7 @@ app.post('/uploadPic', function(req, res){
 });
 
 app.post('/uploadSlide', function(req, res){
+    if (password.trim() != req.fields.pass.trim() ){return res.status(200).send("idiot");}
     if (!req.files) {
         return res.status(400).send('No files were uploaded.');
     }
@@ -190,11 +205,13 @@ app.post('/uploadSlide', function(req, res){
 });
 
 app.post('/clearSlides', function(req, res){
+    if (password.trim() != req.body.pass.trim() ){return res.status(200).send("idiot");}
     clearSlideshow();
     res.status(200).send("slides cleared");
 });
 
 app.post('/uploadVid', function(req, res){
+    if (password.trim() != req.fields.pass.trim() ){return res.status(200).send("idiot");}
     if (!req.files) {
         return res.status(400).send('No files were uploaded.');
     }

@@ -2,6 +2,7 @@
 /.pnp
 .pnp.js
 
+pass.txt
 ngrok.txt
 
 # testing
