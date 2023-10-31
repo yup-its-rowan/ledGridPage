@@ -61,12 +61,11 @@ app.get( '/check', function(req, res){
 
 app.get( '/stateCheck', function (req, res){
     try {
-        execSync( ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/;'", function (error, stdOut, stdErr) {
+        execSync( ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/;'", {timeout:5000}, function (error, stdOut, stdErr) {
             console.log('stdout: ' + stdOut);
             console.log('stderr: ' + stdErr);
             if (error !== null) {
                  console.log('exec error: ' + error);
-                 
             }
         });
         res.status(200).send(displayState);
@@ -257,7 +256,7 @@ function ngrokSCPVideo(id, port){
 }
 
 function startBoardF(){
-    exec( ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/; sudo ./freddy.py & disown'", function (error, stdOut, stdErr) {
+    exec( ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/; sudo ./freddy.py & disown'", {timeout:5000}, function (error, stdOut, stdErr) {
         console.log('stdout: ' + stdOut);
         console.log('stderr: ' + stdErr);
         if (error !== null) {
@@ -267,7 +266,7 @@ function startBoardF(){
 }
 
 function stopBoardF(){
-    exec( ngrokSSHKill(ngrokNumber, ngrokPort) + " 'sudo killall -SIGKILL sudo; sudo killall -SIGTERM python; cd Desktop/; sudo ./off.py & disown'", function (error, stdOut, stdErr) {
+    exec( ngrokSSHKill(ngrokNumber, ngrokPort) + " 'sudo killall -SIGKILL sudo; sudo killall -SIGTERM python; cd Desktop/; sudo ./off.py & disown'", {timeout:5000}, function (error, stdOut, stdErr) {
         console.log('stdout: ' + stdOut);
         console.log('stderr: ' + stdErr);
         if (error !== null) {
@@ -277,7 +276,7 @@ function stopBoardF(){
 }
 
 function startSlideshowF(){
-    exec( ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/; sudo ./slideshow.py & disown'", function (error, stdOut, stdErr) {
+    exec( ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/; sudo ./slideshow.py & disown'", {timeout:5000}, function (error, stdOut, stdErr) {
         console.log('stdout: ' + stdOut);
         console.log('stderr: ' + stdErr);
         if (error !== null) {
@@ -287,7 +286,7 @@ function startSlideshowF(){
 }
 
 function startGifF(){
-    exec( ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/; sudo ./gifV.py & disown'", function (error, stdOut, stdErr) {
+    exec( ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/; sudo ./gifV.py & disown'", {timeout:5000}, function (error, stdOut, stdErr) {
         console.log('stdout: ' + stdOut);
         console.log('stderr: ' + stdErr);
         if (error !== null) {
@@ -297,7 +296,7 @@ function startGifF(){
 }
 
 function startVidF(){
-    exec( ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/; sudo ./videoB.py & disown'", function (error, stdOut, stdErr) {
+    exec( ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/; sudo ./videoB.py & disown'", {timeout:5000}, function (error, stdOut, stdErr) {
         console.log('stdout: ' + stdOut);
         console.log('stderr: ' + stdErr);
         if (error !== null) {
@@ -307,7 +306,7 @@ function startVidF(){
 }
 
 function pushStaticPicture(){
-    exec( ngrokSCPImage(ngrokNumber, ngrokPort), function (error, stdOut, stdErr) {
+    exec( ngrokSCPImage(ngrokNumber, ngrokPort), {timeout:8000}, function (error, stdOut, stdErr) {
         console.log('stdout: ' + stdOut);
         console.log('stderr: ' + stdErr);
         if (error !== null) {
@@ -317,7 +316,7 @@ function pushStaticPicture(){
 }
 
 function pushSlideshowPicture(fileName){
-    exec(ngrokSCPSlide(ngrokNumber, ngrokPort, fileName), function (error, stdOut, stdErr) {
+    exec(ngrokSCPSlide(ngrokNumber, ngrokPort, fileName), {timeout:8000}, function (error, stdOut, stdErr) {
         console.log('stdout: ' + stdOut);
         console.log('stderr: ' + stdErr);
         if (error !== null) {
@@ -334,7 +333,7 @@ function pushSlideshowPicture(fileName){
 }
 
 function clearSlideshow(){
-    exec(ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/; rm -rf slideshow/*'", function (error, stdOut, stdErr) {
+    exec(ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/; rm -rf slideshow/*'", {timeout:5000}, function (error, stdOut, stdErr) {
         console.log('stdout: ' + stdOut);
         console.log('stderr: ' + stdErr);
         if (error !== null) {
