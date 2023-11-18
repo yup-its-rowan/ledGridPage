@@ -13,6 +13,7 @@
     "express": "^4.18.2",
     "express-formidable": "^1.2.0",
     "ffmpeg": "^0.0.4",
-    "jimp": "^0.22.8"
+    "jimp": "^0.22.8",
+    "socket.io": "^4.7.2"
   }
 }

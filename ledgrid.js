@@ -7,6 +7,7 @@ var exec = require('child_process').exec;
 var execSync = require('child_process').execSync;
 const Jimp = require('jimp');
 const formidable = require('express-formidable');
+const socketIO = require('socket.io');
 
 const app = express();
 
@@ -209,6 +210,23 @@ app.post('/clearSlides', function(req, res){
     res.status(200).send("slides cleared");
 });
 
+
+var red = [];
+var green = [];
+var blue = [];
+const square = 64;
+
+for (let i=0; i<square; i++){
+    red.push([]);
+    green.push([]);
+    blue.push([]);
+    for (let j=0; j<square; j++){
+        red[i].push(i+j);
+        green[i].push(i+j);
+        blue[i].push(i+j);
+    }
+}
+
 app.post('/uploadVid', function(req, res){
     if (password.trim() != req.fields.pass.trim() ){return res.status(200).send("idiot");}
     if (!req.files) {
@@ -229,7 +247,39 @@ app.post('/uploadVid', function(req, res){
     }
 });
 
+let io = null;
 const httpsServer = https.createServer(credentials, app);
+io = socketIO(httpsServer);
+
+io.on('connection', (socket) => {
+    console.log('a user connected');
+    socket.on('disconnect', () => {
+        console.log("user disconnected");
+    });
+    socket.on('paintSqr', (data) => {
+        red[data.x][data.y] = data.red;
+        green[data.x][data.y] = data.green;
+        blue[data.x][data.y] = data.blue;
+        socket.broadcast.emit('updatePaint', data);
+    });
+    socket.on('getPaint', () => {
+        socket.emit('updatePaintAll', {red: red, green: green, blue: blue});
+    });
+    socket.on('clearingPaint', () => {
+        clearPaint();
+        io.emit('clearPaint');
+    });
+    
+});
+function clearPaint () {
+    for (let i=0; i<square; i++){
+        for (let j=0; j<square; j++){
+            red[i][j] = 255;
+            green[i][j] = 255;
+            blue[i][j] = 255;
+        }
+    }
+}
 
 httpsServer.listen(portNumber, () => {
 	console.log('ahem. these nuts?');
@@ -245,6 +295,10 @@ function ngrokSSHKill(id, port){
 
 function ngrokSCPImage(id, port){
     return "scp -P " + port + " "+ __dirname + "/uploaded/frogg.png admin@" + id + ".tcp.ngrok.io:~/Desktop/image";
+}
+
+function ngrokSCPPaint(id, port){
+    return "scp -P " + port + " "+ __dirname + "/uploaded/paint.png admin@" + id + ".tcp.ngrok.io:~/Desktop/image";
 }
 
 function ngrokSCPSlide(id, port, name){
@@ -307,6 +361,16 @@ function startVidF(){
 
 function pushStaticPicture(){
     exec( ngrokSCPImage(ngrokNumber, ngrokPort), {timeout:8000}, function (error, stdOut, stdErr) {
+        console.log('stdout: ' + stdOut);
+        console.log('stderr: ' + stdErr);
+        if (error !== null) {
+             console.log('exec error: ' + error);
+        }
+    });
+}
+
+function pushPaint(){
+    exec( ngrokSCPPaint(ngrokNumber, ngrokPort), {timeout:8000}, function (error, stdOut, stdErr) {
         console.log('stdout: ' + stdOut);
         console.log('stderr: ' + stdErr);
         if (error !== null) {
