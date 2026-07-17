@@ -8,6 +8,7 @@ var execSync = require('child_process').execSync;
 const Jimp = require('jimp');
 const formidable = require('express-formidable');
 const socketIO = require('socket.io');
+const {createCanvas} = require('canvas');
 
 const app = express();
 
@@ -110,7 +111,7 @@ app.post( '/stateChange', function (req, res){
         } else if (temp == "paint"){
             stopBoardF();
             setTimeout(function(){
-                //startPaintF();
+                startPaintF();
             }, 500);
         }
     } else {
@@ -188,7 +189,7 @@ app.post('/uploadSlide', function(req, res){
         return res.status(400).send('No files were uploaded.');
     }
     const myFile = req.files.myFile;
-    console.log(myFile);
+    //console.log(myFile);
     if (myFile.type == "image/png" || myFile.type == "image/jpeg"){
         const filePath = __dirname + '/uploaded/' + myFile.name;
         exec('mv ' + myFile.path + ' ' + "'" + filePath + "'", (err, stdout, stderr) => {
@@ -261,6 +262,7 @@ io.on('connection', (socket) => {
         green[data.x][data.y] = data.green;
         blue[data.x][data.y] = data.blue;
         socket.broadcast.emit('updatePaint', data);
+        batchedUpdateBoard();
     });
     socket.on('getPaint', () => {
         socket.emit('updatePaintAll', {red: red, green: green, blue: blue});
@@ -271,14 +273,29 @@ io.on('connection', (socket) => {
     });
     
 });
+
 function clearPaint () {
     for (let i=0; i<square; i++){
         for (let j=0; j<square; j++){
-            red[i][j] = 255;
-            green[i][j] = 255;
-            blue[i][j] = 255;
+            red[i][j] = 54;
+            green[i][j] = 69;
+            blue[i][j] = 79;
         }
     }
+    pushPaint();
+}
+
+var batchedUpdateProcessing = false;
+
+function batchedUpdateBoard() {
+    if (batchedUpdateProcessing) {
+        return;
+    }
+    batchedUpdateProcessing = true;
+    setTimeout(() => {
+        pushPaint();
+        batchedUpdateProcessing = false;
+    }, 400)
 }
 
 httpsServer.listen(portNumber, () => {
@@ -298,7 +315,7 @@ function ngrokSCPImage(id, port){
 }
 
 function ngrokSCPPaint(id, port){
-    return "scp -P " + port + " "+ __dirname + "/uploaded/paint.png admin@" + id + ".tcp.ngrok.io:~/Desktop/image";
+    return "scp -P " + port + " "+ __dirname + "/uploaded/pulledGrid.png admin@" + id + ".tcp.ngrok.io:~/Desktop/image";
 }
 
 function ngrokSCPSlide(id, port, name){
@@ -359,6 +376,17 @@ function startVidF(){
     });
 }
 
+function startPaintF(){
+    pushPaint();
+    exec( ngrokSSH(ngrokNumber, ngrokPort) + " 'cd Desktop/; sudo ./gridDisplay.py & disown'", {timeout:5000}, function (error, stdOut, stdErr) {
+        console.log('stdout: ' + stdOut);
+        console.log('stderr: ' + stdErr);
+        if (error !== null) {
+             console.log('exec error: ' + error);
+        }
+    });
+}
+
 function pushStaticPicture(){
     exec( ngrokSCPImage(ngrokNumber, ngrokPort), {timeout:8000}, function (error, stdOut, stdErr) {
         console.log('stdout: ' + stdOut);
@@ -369,7 +397,24 @@ function pushStaticPicture(){
     });
 }
 
+
+canvas = createCanvas(64, 64);
+context = canvas.getContext('2d');
+function buildPaint(){
+    
+    for (let j=0; j<64; j++){
+        for (let i=0; i<64; i++){
+            context.fillStyle = 'rgb(' + red[j][i] + ',' + green[j][i] + ',' + blue[j][i] + ')';
+            context.fillRect(i, j, 1, 1);
+        }
+    }
+
+    buffer = canvas.toBuffer('image/png');
+    fs.writeFileSync(__dirname + '/uploaded/pulledGrid.png', buffer);
+}
+
 function pushPaint(){
+    buildPaint();
     exec( ngrokSCPPaint(ngrokNumber, ngrokPort), {timeout:8000}, function (error, stdOut, stdErr) {
         console.log('stdout: ' + stdOut);
         console.log('stderr: ' + stdErr);

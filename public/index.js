@@ -50,16 +50,14 @@ socket.on('updatePaint', (data) => {
 socket.on('clearPaint', () => {
     for (var i = 0; i < sqr; i++) {
         for (var j = 0; j < sqr; j++) {
-            red[i][j] = 255;
-            green[i][j] = 255;
-            blue[i][j] = 255;
+            red[i][j] = 54;
+            green[i][j] = 69;
+            blue[i][j] = 79;
             var element = document.getElementById('row-'+i).children[j];
             element.style.backgroundColor = 'rgb(' + red[i][j] + ',' + green[i][j] + ',' + blue[i][j] + ')';
         }
     }
 });
-
-
 
 function createGrid(numRows, numSquares) {
     var container = document.getElementById('container');;
@@ -85,11 +83,55 @@ var mouseDonw = false;
 let prevx = -1;
 let prevy = -1;
 function changeColor(row, square, click) {
-    var element = document.getElementById('row-'+row).children[square];
-    if (mouseDonw || click) {
-        element.style.backgroundColor = 'black';
-        socket.emit('paintSqr', {x: row, y: square, red: 0, green: 0, blue: 0});
+    if (click) {
+        plotPoint(row, square, cR, cG, cB);
+    } else if (mouseDonw) {
+        plotPoint(row, square, cR, cG, cB);
+        if (prevx != -1) {
+            var x = prevx;
+            var y = prevy;
+            var dx = Math.abs(row - x);
+            var dy = Math.abs(square - y);
+            var directionToGoX = row > x ? 1 : -1;
+            var directionToGoY = square > y ? 1 : -1;
+            while(true) {
+                plotPoint(x, y, cR, cG, cB);
+                if (x == row && y == square) {
+                    break;
+                }
+                if (dx > dy) {
+                    x += directionToGoX;
+                    dx -= 1;
+                } else {
+                    y += directionToGoY;
+                    dy -= 1;
+                }
+            }
+        }
     }
+    prevx = row;
+    prevy = square;
+}
+
+
+let cR = 0;
+let cG = 0;
+let cB = 0;
+
+function colorUpdaterHex(re, gree, blu){
+    cR = hexToDec(re);
+    cG = hexToDec(gree);
+    cB = hexToDec(blu);
+}
+
+function hexToDec(hex) {
+    return parseInt(hex, 16);
+}
+
+function plotPoint(x1, y1, red1, green1, blue1) {
+    var element = document.getElementById('row-'+x1).children[y1];
+    element.style.backgroundColor = 'rgb(' + red1 + ',' + green1 + ',' + blue1 + ')';
+    socket.emit('paintSqr', {x: x1, y: y1, red: red1, green: green1, blue: blue1});
 }
 
 document.addEventListener('keydown', function(event) {
@@ -115,8 +157,11 @@ document.addEventListener("DOMContentLoaded", function(event) {
     document.onmousedown = function() { 
         mouseDonw = true;
     }
-    document.onmouseup = function() {
+    document.onmouseup = function() { //this should proberly be bresenham's line gen
         mouseDonw = false;
+        prevx = -1;
+        prevy = -1;
+        console.log( 'mouseup'  + prevx + ' ' + prevy);
     }
 
     document.ondragstart = function() { //i think this stops drag errors 
@@ -126,4 +171,13 @@ document.addEventListener("DOMContentLoaded", function(event) {
     document.ondrop = function() { //minorly untested
         return false;
     }
+
+    colorPicker = document.getElementById('colorPick');
+    colorUpdaterHex(colorPicker.value.substring(1,3), colorPicker.value.substring(3,5), colorPicker.value.substring(5,7)); //this is here to make sure that duplicating the tab doesn't break stuff
+    colorPicker.addEventListener('change', function() { //this runs ater you close the color picker
+        colorUpdaterHex(this.value.substring(1,3), this.value.substring(3,5), this.value.substring(5,7));
+    });
+    colorPicker.addEventListener('input', function() { //this runs while you're changing values in the color picker
+        colorUpdaterHex(this.value.substring(1,3), this.value.substring(3,5), this.value.substring(5,7));
+    });
 });

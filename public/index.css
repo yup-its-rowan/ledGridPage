@@ -41,3 +41,16 @@ li {
   width: 5em;
   transition: background-color 0.5s ease;
 }
+
+#spacer{
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 5vh;
+}
+
+#colorPick {
+  margin: 0.4em;
+  width: 5em;
+  height: 2em;
+}
